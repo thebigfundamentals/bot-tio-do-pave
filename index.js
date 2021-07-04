@@ -19,7 +19,7 @@ const T = new Twit({
 
 const getJoke = async () => {
     axios.get('https://tiodopave.herokuapp.com/api'); // cold start on heroku
-    setTimeout(() => {
+    setTimeout(async () => {
         const response = await axios.get('https://tiodopave.herokuapp.com/api');
         const randomJoke = await response.data[Math.floor(Math.random() * response.data.length)];
         return randomJoke.line
