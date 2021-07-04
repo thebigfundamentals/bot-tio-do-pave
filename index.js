@@ -18,9 +18,12 @@ const T = new Twit({
 });
 
 const getJoke = async () => {
-    const response = await axios.get('https://tiodopave.herokuapp.com/api');
-    const randomJoke = await response.data[Math.floor(Math.random() * response.data.length)];
-    return randomJoke.line
+    axios.get('https://tiodopave.herokuapp.com/api'); // cold start on heroku
+    setTimeout(() => {
+        const response = await axios.get('https://tiodopave.herokuapp.com/api');
+        const randomJoke = await response.data[Math.floor(Math.random() * response.data.length)];
+        return randomJoke.line
+    }, 30000)
 
 }
 
@@ -48,6 +51,6 @@ const replyTweet = async (event) => {
 stream.on('tweet', replyTweet);
 
 postTweet();
-setInterval(postTweet, 7200000)
+setInterval(postTweet, 30000)
 
 
