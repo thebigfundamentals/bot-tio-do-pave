@@ -1,5 +1,3 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 require('dotenv').config();
 
 console.log('Bot is working')
@@ -18,25 +16,28 @@ const T = new Twit({
 });
 
 const getJoke = async () => {
-    axios.get('https://tiodopave.herokuapp.com/api'); // cold start on heroku
-    setTimeout(async () => {
-        const response = await axios.get('https://tiodopave.herokuapp.com/api');
-        const randomJoke = await response.data[Math.floor(Math.random() * response.data.length)];
-        return randomJoke.line
-    }, 30000)
+    const response = await axios.get('https://tiodopave.herokuapp.com/api');
+    const randomJoke = await response.data[Math.floor(Math.random() * response.data.length)];
+    return randomJoke.line
 
 }
 
 const postTweet = async () => {
-    T.post('statuses/update', { status: await getJoke() }, function (err, data, response) {
-        console.log(`Sent tweet: ${data.text}`)
-    })
+    axios.get('https://tiodopave.herokuapp.com/api'); // cold start on heroku
+    setTimeout(async function () {
+        T.post('statuses/update', { status: await getJoke() }, function (err, data, response) {
+            console.log(`Sent tweet: ${data.text}`)
+        })
+    }, 15000)
 };
 
 const postReply = async (user, id) => {
-    T.post('statuses/update', { status: `@${user} ${await getJoke()}`, in_reply_to_status_id: id }, function (err, data, response) {
-        console.log(`Sent tweet: ${data.text}`)
-    })
+    axios.get('https://tiodopave.herokuapp.com/api');
+    setTimeout(async function () {
+        T.post('statuses/update', { status: `@${user} ${await getJoke()}`, in_reply_to_status_id: id }, function (err, data, response) {
+            console.log(`Sent tweet to ${user}: ${data.text}`)
+        })
+    }, 15000)
 };
 
 const stream = T.stream('statuses/filter', { track: '@TioDoPaveBot' });
@@ -51,6 +52,6 @@ const replyTweet = async (event) => {
 stream.on('tweet', replyTweet);
 
 postTweet();
-setInterval(postTweet, 30000)
+setInterval(postTweet, 7200000)
 
 
