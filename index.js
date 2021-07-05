@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fetch = require('node-fetch');
 
 console.log('Bot is working')
 
@@ -22,6 +23,32 @@ const getJoke = async () => {
 
 }
 
+const getJokeByKeyword = async (keywordRequest) => {
+    const keyword = { keyword: keywordRequest }
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(keyword),
+    };
+    try {
+        const response = await fetch('https://tiodopave.herokuapp.com/keyword', options);
+        const data = await response.json();
+
+        if (data.length === 0) {
+            return `Ops! Não tenho nenhuma piada com "${keywordRequest}". Você pode pedir uma piada aleatória mencionando TioDoPaveBot sem o comando "piada de". Se quiser sugerir piadas, é só entrar em contato pelo e-mail da bio.`
+        }
+
+        const keywordJoke = await data[Math.floor(Math.random() * data.length)];
+        return keywordJoke.line
+    }
+    catch (e) {
+        return `Ops! Algo deu errado. Tente novamente mais tarde.`
+    }
+};
+
+
 const postTweet = async () => {
     axios.get('https://tiodopave.herokuapp.com/api'); // cold start on heroku
     setTimeout(async function () {
@@ -32,7 +59,6 @@ const postTweet = async () => {
 };
 
 const postReply = async (user, id) => {
-    axios.get('https://tiodopave.herokuapp.com/api');
     setTimeout(async function () {
         T.post('statuses/update', { status: `@${user} ${await getJoke()}`, in_reply_to_status_id: id }, function (err, data, response) {
             console.log(`Sent tweet to ${user}: ${data.text}`)
@@ -40,16 +66,48 @@ const postReply = async (user, id) => {
     }, 15000)
 };
 
+const postReplyKeyword = async (user, id, keyword) => {
+
+    setTimeout(async function () {
+        T.post('statuses/update', { status: `@${user} ${await getJokeByKeyword(keyword)}`, in_reply_to_status_id: id }, function (err, data, response) {
+            console.log(`Sent tweet to ${user}: ${data.text}`)
+        })
+    }, 15000)
+};
+
 const stream = T.stream('statuses/filter', { track: '@TioDoPaveBot' });
 
-const replyTweet = async (event) => {
+const tweetExtractor = (regex, g1, g2) => {
+    return g2
+};
+const requestExtractor = (regex, g1, g2, g3) => {
+    return g3
+};
+
+const replyRequest = async (event) => {
+    axios.get('https://tiodopave.herokuapp.com/api');
+
+    const regexTweetText = new RegExp(/(@TioDoPaveBot )(.*)/, 'gmi');
+    const regexJokeText = new RegExp(/(.*)(piada de )(.*)/, 'gmi');
+    const regexRequestTest = new RegExp(/(?:piada de)/, 'gmi');
     const screenName = event.user.screen_name;
     const inReplyTo = event.id_str
-    postReply(screenName, inReplyTo)
+    const tweetText = event.text.replace(regexTweetText, tweetExtractor).toString();
+    console.log(`Incoming request.`);
+
+    if (regexRequestTest.test(tweetText)) {
+        const requestText = tweetText.replace(regexJokeText, requestExtractor);
+        console.log(`${screenName} requested a joke containing ${requestText}`);
+        postReplyKeyword(screenName, inReplyTo, requestText)
+    }
+    else {
+        console.log(`${screenName} requested a random joke`);
+        postReply(screenName, inReplyTo)
+    }
 
 };
 
-stream.on('tweet', replyTweet);
+stream.on('tweet', replyRequest);
 
 postTweet();
 setInterval(postTweet, 7200000)
