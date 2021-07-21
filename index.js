@@ -95,7 +95,7 @@ const replyRequest = async (event) => {
     const tweetText = event.text.replace(regexTweetText, tweetExtractor).toString();
     console.log(`Incoming request.`);
 
-    if (screenName == 'TioDoPaveBot'){
+    if (screenName == 'TioDoPaveBot'){ // avoid infinital loop
         console.log('Loop request, skipped.');
         return
     };
