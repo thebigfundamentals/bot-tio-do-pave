@@ -86,7 +86,7 @@ const requestExtractor = (regex, g1, g2, g3) => {
 
 const replyRequest = async (event) => {
     axios.get('https://tiodopave.herokuapp.com/api');
-
+    
     const regexTweetText = new RegExp(/(@TioDoPaveBot )(.*)/, 'gmi');
     const regexJokeText = new RegExp(/(.*)(piada de )(.*)/, 'gmi');
     const regexRequestTest = new RegExp(/(?:piada de)/, 'gmi');
@@ -94,6 +94,11 @@ const replyRequest = async (event) => {
     const inReplyTo = event.id_str
     const tweetText = event.text.replace(regexTweetText, tweetExtractor).toString();
     console.log(`Incoming request.`);
+
+    if (screenName == 'TioDoPaveBot'){
+        console.log('Loop request, skipped.');
+        return
+    };
 
     if (regexRequestTest.test(tweetText)) {
         const requestText = tweetText.replace(regexJokeText, requestExtractor);
