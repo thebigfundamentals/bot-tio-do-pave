@@ -112,9 +112,23 @@ const replyRequest = async (event) => {
 
 };
 
+const updateBio = async () => {
+    axios.get('https://tiodopave.herokuapp.com/api'); // cold start on heroku
+    setTimeout(async function () {
+        const response = await axios.get('https://tiodopave.herokuapp.com/api');
+        const numberOfJokes = response.data.length;
+        const updatedDescription = `O bot do Tio do Pavê. Criado por @tbfundamentals. github: https://github.com/thebigfundamentals/bot-tio-do-pave \n\n${numberOfJokes} piadas disponíveis.`
+        T.post('account/update_profile', { description: updatedDescription }, function (err, data, response) {
+            console.log(`Updated bio: ${data.description}`)
+        })
+    }, 15000)
+};
+
 stream.on('tweet', replyRequest);
 
 postTweet();
+updateBio();
 setInterval(postTweet, 7200000)
+setInterval(updateBio, 1000 * 60 * 60 * 24)
 
 
